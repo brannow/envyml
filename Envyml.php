@@ -11,11 +11,14 @@
 
 namespace Brannow\Component\Envyml;
 
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Dotenv\Exception\FormatException;
 use Symfony\Component\Dotenv\Exception\FormatExceptionContext;
 use Symfony\Component\Dotenv\Exception\PathException;
 use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Yaml\Yaml;
+use Symfony\Contracts\Cache\ItemInterface;
 
 /**
  * Manages .env files.
@@ -480,12 +483,69 @@ final class Envyml
 
     private function doLoad(bool $overrideExistingVars, array $paths): void
     {
+        $cache = new FilesystemAdapter();
         foreach ($paths as $path) {
             if (!is_readable($path) || is_dir($path)) {
                 throw new PathException($path);
             }
 
-            $this->populate($this->parse(file_get_contents($path), $path), $overrideExistingVars);
+            $cacheKey = basename($path).'_'.sha1($path).'_'.filemtime($path);
+
+            // The callable will only be executed on a cache miss.
+            $flattenData = $cache->get($cacheKey, function (ItemInterface $item) use ($path) {
+                $item->expiresAfter(99999999);
+
+                // ... do some HTTP request or heavy computations
+                // refactor hardcoded the env stuff into root level
+                $var = $this->translateArrayKeyValueIntoRoot(Yaml::parseFile($path), 'ENV');
+                $flattenData = $this->flatArrayKeys($var);
+
+                return $flattenData;
+            });
+
+            $this->populate($flattenData, $overrideExistingVars);
         }
+    }
+
+    /**
+     * @param $ary
+     * @param $key
+     * @return array
+     */
+    private function translateArrayKeyValueIntoRoot($ary, $key): array
+    {
+        if (!empty($ary[$key])) {
+            $subAry = $ary[$key];
+            unset($ary[$key]);
+            foreach ($subAry as $key => $value) {
+                $ary[$key] = $value;
+            }
+        }
+
+        return $ary;
+    }
+
+    /**
+     * @param array $ary
+     * @param string $keyPrefix
+     * @param string $spacer
+     * @return array
+     */
+    private function flatArrayKeys(array $ary, string $keyPrefix = '', $spacer = '_'): array
+    {
+        $finalArray = [];
+        $kp = ($keyPrefix === '')? '': $keyPrefix.$spacer;
+        foreach ($ary as $key => $value) {
+           if (is_array($value)) {
+                $subAry = $this->flatArrayKeys($value, $kp.$key, $spacer);
+                foreach ($subAry as $k => $v) {
+                    $finalArray[$k] = $v;
+                }
+           } else {
+               $finalArray[$kp.$key] = (string)$value;
+           }
+        }
+
+        return $finalArray;
     }
 }
