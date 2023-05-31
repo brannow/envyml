@@ -13,9 +13,6 @@ namespace Brannow\Component\Envyml;
 
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
-use Symfony\Component\Dotenv\Exception\FormatException;
-use Symfony\Component\Dotenv\Exception\FormatExceptionContext;
-use Symfony\Component\Dotenv\Exception\PathException;
 use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
@@ -58,8 +55,8 @@ final class Envyml
      * @param string    $path       A file to load
      * @param ...string $extraPaths A list of additional files to load
      *
-     * @throws FormatException when a file has a syntax error
-     * @throws PathException   when a file does not exist or is not readable
+     * @throws Exception when a file has a syntax error
+     * @throws Exception   when a file does not exist or is not readable
      */
     public function load(string $path, string ...$extraPaths): void
     {
@@ -77,8 +74,8 @@ final class Envyml
      * @param string $defaultEnv The app env to use when none is defined
      * @param array  $testEnvs   A list of app envs for which .env.local should be ignored
      *
-     * @throws FormatException when a file has a syntax error
-     * @throws PathException   when a file does not exist or is not readable
+     * @throws Exception when a file has a syntax error
+     * @throws Exception   when a file does not exist or is not readable
      */
     public function loadEnv(string $path, string $varName = 'APP_ENV', string $defaultEnv = 'dev', array $testEnvs = ['test']): void
     {
@@ -116,8 +113,8 @@ final class Envyml
      * @param string    $path       A file to load
      * @param ...string $extraPaths A list of additional files to load
      *
-     * @throws FormatException when a file has a syntax error
-     * @throws PathException   when a file does not exist or is not readable
+     * @throws Exception when a file has a syntax error
+     * @throws Exception when a file does not exist or is not readable
      */
     public function overload(string $path, string ...$extraPaths): void
     {
@@ -175,7 +172,7 @@ final class Envyml
      *
      * @return array An array of env variables
      *
-     * @throws FormatException when a file has a syntax error
+     * @throws Exception when a file has a syntax error
      */
     public function parse(string $data, string $path = '.env'): array
     {
@@ -407,7 +404,7 @@ final class Envyml
             $process->setEnv($this->values);
             try {
                 $process->mustRun();
-            } catch (ProcessException $e) {
+            } catch (Exception $e) {
                 throw $this->createFormatException(sprintf('Issue expanding a command (%s)', $process->getErrorOutput()));
             }
 
@@ -475,7 +472,7 @@ final class Envyml
 
     private function createFormatException($message)
     {
-        return new FormatException($message, new FormatExceptionContext($this->data, $this->path, $this->lineno, $this->cursor));
+        return new Exception($message);
     }
 
     private function doLoad(bool $overrideExistingVars, array $paths): void
@@ -483,7 +480,7 @@ final class Envyml
         $cache = new FilesystemAdapter();
         foreach ($paths as $path) {
             if (!is_readable($path) || is_dir($path)) {
-                throw new PathException($path);
+                throw new Exception($path);
             }
 
             $cacheKey = basename($path).'_'.sha1($path).'_'.filemtime($path);

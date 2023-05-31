@@ -3,6 +3,7 @@
 namespace Brannow\Component\Envyml;
 
 use Symfony\Component\Runtime\SymfonyRuntime as DefaultRuntime;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 class SymfonyRuntime extends DefaultRuntime
 {
