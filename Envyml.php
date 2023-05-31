@@ -484,15 +484,16 @@ final class Envyml
                 throw new Exception($path);
             }
 
-            $cacheKey = basename($path).'_'.sha1($path).'_'.filemtime($path);
+            $realPath = realPath($path);
+            $cacheKey = basename($path).'_'.sha1($realPath).'_'.filemtime($realPath);
 
             // The callable will only be executed on a cache miss.
-            $flattenData = $cache->get($cacheKey, function (ItemInterface $item) use ($path) {
+            $flattenData = $cache->get($cacheKey, function (ItemInterface $item) use ($realPath) {
                 $item->expiresAfter(99999999);
 
                 // ... do some HTTP request or heavy computations
                 // refactor hardcoded the env stuff into root level
-                $var = $this->translateArrayKeyValueIntoRoot(Yaml::parseFile($path), 'ENV');
+                $var = $this->translateArrayKeyValueIntoRoot(Yaml::parseFile($realPath), 'ENV');
                 $flattenData = $this->flatArrayKeys($var);
 
                 return $flattenData;
