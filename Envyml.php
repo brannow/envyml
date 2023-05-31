@@ -17,6 +17,7 @@ use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Cache\ItemInterface;
+use \Exception;
 
 /**
  * Manages .env files.
