@@ -23,7 +23,7 @@
         "symfony/runtime": "^4.0 || ^5.0 || ^6.1"
     },
     "replace": {
-        "symfony/dotenv": "^4.0 || ^5.0 || ^6.0"
+        "symfony/dotenv": "*"
     },
     "autoload": {
         "psr-4": { "Brannow\\Component\\Envyml\\": "" }
