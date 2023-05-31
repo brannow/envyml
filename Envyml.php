@@ -13,6 +13,7 @@ namespace Brannow\Component\Envyml;
 
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
+use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
@@ -481,7 +482,7 @@ final class Envyml
         $cache = new FilesystemAdapter();
         foreach ($paths as $path) {
             if (!is_readable($path) || is_dir($path)) {
-                throw new Exception($path);
+                throw new FileLocatorFileNotFoundException($path);
             }
 
             $realPath = realPath($path);

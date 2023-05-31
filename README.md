@@ -53,10 +53,18 @@ require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 ```
 
 update the path to your env.yml location: 
+```php
+putenv(ENV_FILE_PATH, 'ABSOLUTE_PATH_HERE')
 ```
-putenv(ENV_FILE_PATH, ABSOLUTE_PATH)
-```
+or change in the entrypoint scripts (index.php / console)
+```php
+// env.yml loader announcement, this will disable dotenv loader
+$_SERVER['APP_RUNTIME'] = \Brannow\Component\Envyml\SymfonyRuntime::class;
+$_ENV['ENV_FILE_PATH'] ??= './env.yml';
 
+// symfony default
+require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
+```
 
 
 ## Best Practice
