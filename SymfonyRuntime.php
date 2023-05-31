@@ -9,7 +9,11 @@ class SymfonyRuntime extends DefaultRuntime
 {
     public function __construct(array $options = [])
     {
-        $envFilePath =  $_ENV['ENV_FILE_PATH'] ?: __DIR__ . '/../../env.yml';
+        if (isset($_ENV['ENV_FILE_PATH'])) {
+            $envFilePath =  $_ENV['ENV_FILE_PATH'];
+        } else {
+            $envFilePath = __DIR__ . '/../../env.yml';
+        }
         (new Envyml(true))->overload($envFilePath);
 
         $options['disable_dotenv'] = true;
