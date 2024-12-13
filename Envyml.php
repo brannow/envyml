@@ -117,7 +117,6 @@ final class Envyml
     private function doLoad(bool $overrideExistingVars, array $paths): void
     {
         $cache = new FilesystemAdapter();
-        var_dump($paths, $overrideExistingVars);
         foreach ($paths as $path) {
             if (!is_readable($path) || is_dir($path)) {
                 throw new FileLocatorFileNotFoundException($path);
