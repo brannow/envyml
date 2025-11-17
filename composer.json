@@ -17,13 +17,13 @@
     ],
     "require": {
         "php": "^8.1",
-        "symfony/cache": "^7.1",
-        "symfony/process": "^7.1",
-        "symfony/yaml": "^7.1",
-        "symfony/runtime": "^7.1"
+        "symfony/cache": "^7.*",
+        "symfony/process": "^7.*",
+        "symfony/yaml": "^7.*",
+        "symfony/runtime": "^7.*"
     },
     "replace": {
-        "symfony/dotenv": ">=6.4"
+        "symfony/dotenv": "6.* || 7.*"
     },
     "autoload": {
         "psr-4": { "Brannow\\Component\\Envyml\\": "" }
