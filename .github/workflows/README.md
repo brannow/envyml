@@ -8,7 +8,7 @@ This directory contains automated workflows for the envyml project.
 **Trigger:** Push to master, Pull Requests
 
 Runs comprehensive tests across multiple PHP and Symfony versions:
-- PHP versions: 8.1, 8.2, 8.3, 8.4
+- PHP versions: 8.2, 8.3, 8.4
 - Symfony versions: 7.0, 7.1
 - Code quality checks
 - Security vulnerability scanning
@@ -52,7 +52,7 @@ Key features:
 
 ## Branch Strategy
 
-- `master`: Main stable branch (currently supports Symfony 7.x and PHP 8.1+)
+- `master`: Main stable branch (currently supports Symfony 7.x and PHP 8.2+)
 
 ## Manual Workflows
 
