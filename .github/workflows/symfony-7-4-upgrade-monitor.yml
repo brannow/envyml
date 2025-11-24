@@ -1,0 +1,119 @@
+name: Symfony 7.4 Upgrade Monitor
+
+on:
+  schedule:
+    # Check daily at 3 AM UTC for Symfony 7.4 release
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      force_check:
+        description: 'Force check for Symfony 7.4'
+        required: false
+        default: 'false'
+
+jobs:
+  check-symfony-7-4-release:
+    name: Check Symfony 7.4 Release Status
+    runs-on: ubuntu-latest
+    outputs:
+      symfony_7_4_available: ${{ steps.check-release.outputs.available }}
+      symfony_version: ${{ steps.check-release.outputs.version }}
+
+    steps:
+      - name: Check Symfony 7.4 availability
+        id: check-release
+        run: |
+          # Check if Symfony 7.4 is available on Packagist
+          SYMFONY_VERSION=$(curl -s https://repo.packagist.org/p2/symfony/cache.json | \
+            jq -r '.packages["symfony/cache"] | keys[] | select(startswith("7.4"))' | \
+            head -n 1)
+
+          if [ ! -z "$SYMFONY_VERSION" ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+            echo "version=$SYMFONY_VERSION" >> $GITHUB_OUTPUT
+            echo "✅ Symfony 7.4 is available: $SYMFONY_VERSION"
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
+            echo "❌ Symfony 7.4 is not yet available"
+          fi
+
+  create-upgrade-pr:
+    name: Create Symfony 7.4 Upgrade PR
+    runs-on: ubuntu-latest
+    needs: check-symfony-7-4-release
+    if: needs.check-symfony-7-4-release.outputs.symfony_7_4_available == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create upgrade branch
+        run: |
+          git checkout -b auto-upgrade-symfony-7-4
+
+      - name: Update composer.json for Symfony 7.4
+        run: |
+          # Update Symfony version constraints to include 7.4
+          sed -i 's/"symfony\/cache": "7\.\*"/"symfony\/cache": "^7.0"/' composer.json
+          sed -i 's/"symfony\/process": "7\.\*"/"symfony\/process": "^7.0"/' composer.json
+          sed -i 's/"symfony\/yaml": "7\.\*"/"symfony\/yaml": "^7.0"/' composer.json
+          sed -i 's/"symfony\/runtime": "7\.\*"/"symfony\/runtime": "^7.0"/' composer.json
+
+          git add composer.json
+          git commit -m "chore: Update Symfony constraints to support 7.4" || echo "No changes needed"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto-upgrade-symfony-7-4
+          base: master
+          title: "chore: Add Symfony 7.4 support"
+          body: |
+            ## 🎉 Symfony 7.4 Released!
+
+            This PR updates the Symfony version constraints to support Symfony 7.4.
+
+            **Symfony Version Detected:** ${{ needs.check-symfony-7-4-release.outputs.symfony_version }}
+
+            ### Changes
+            - Updates Symfony package constraints from `7.*` to `^7.0`
+            - This allows Composer to install Symfony 7.4 and future 7.x versions
+
+            ### Checklist
+            - [ ] Review changes carefully
+            - [ ] Ensure all CI checks pass
+            - [ ] Test with Symfony 7.4
+            - [ ] Update CHANGELOG if necessary
+
+            ---
+            *This PR was automatically created by the Symfony 7.4 upgrade monitor workflow.*
+          labels: |
+            symfony
+            automated-pr
+            symfony-7-4
+          draft: false
+
+  notify-success:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: [check-symfony-7-4-release, create-upgrade-pr]
+    if: needs.check-symfony-7-4-release.outputs.symfony_7_4_available == 'true'
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## ✅ Symfony 7.4 Upgrade PR Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Symfony Version:** ${{ needs.check-symfony-7-4-release.outputs.symfony_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "A pull request has been created to add Symfony 7.4 support." >> $GITHUB_STEP_SUMMARY

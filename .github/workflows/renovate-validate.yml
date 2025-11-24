@@ -1,0 +1,54 @@
+name: Validate Renovate Config
+
+on:
+  push:
+    paths:
+      - 'renovate.json'
+      - '.github/renovate.json'
+      - '.github/renovate.json5'
+      - '.renovaterc'
+      - '.renovaterc.json'
+  pull_request:
+    paths:
+      - 'renovate.json'
+      - '.github/renovate.json'
+      - '.github/renovate.json5'
+      - '.renovaterc'
+      - '.renovaterc.json'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Renovate Configuration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Renovate
+        run: npm install -g renovate
+
+      - name: Validate renovate.json
+        run: |
+          if [ -f "renovate.json" ]; then
+            echo "Validating renovate.json..."
+            renovate-config-validator renovate.json
+            echo "✅ renovate.json is valid"
+          else
+            echo "No renovate.json found"
+            exit 1
+          fi
+
+      - name: Print config
+        run: |
+          echo "## Renovate Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          cat renovate.json >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
