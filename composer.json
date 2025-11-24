@@ -29,5 +29,10 @@
         "psr-4": { "Brannow\\Component\\Envyml\\": "" }
     },
     "minimum-stability": "dev",
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": true
+        }
+    },
     "extra": { }
 }
