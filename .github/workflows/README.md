@@ -30,13 +30,13 @@ Validates the Renovate configuration file:
 - Validates configuration schema
 - Displays config in job summary
 
-### 🎯 Symfony 7.2/7.4 Integration (`symfony-7-2-integration.yml`)
+### 🎯 Symfony 7.4 Upgrade Monitor (`symfony-7-4-upgrade-monitor.yml`)
 **Trigger:** Daily cron (3 AM UTC), Manual dispatch
 
-Monitors Symfony 7.4 release and automates branch integration:
+Monitors Symfony 7.4 release and automates upgrade:
 - Checks daily for Symfony 7.4 release on Packagist
-- Automatically creates PR to merge `7-2` branch into `master` when 7.4 is available
-- Creates GitHub issue if manual intervention is needed due to conflicts
+- Automatically creates PR to update Symfony constraints when 7.4 is available
+- Updates version constraints from `7.*` to `^7.0`
 - Can be manually triggered via workflow dispatch
 
 ## Renovate Configuration
@@ -52,8 +52,7 @@ Key features:
 
 ## Branch Strategy
 
-- `master`: Main stable branch
-- `7-2`: Development branch for Symfony 7.2/7.4 support (will merge to master when Symfony 7.4 is released)
+- `master`: Main stable branch (currently supports Symfony 7.x and PHP 8.1+)
 
 ## Manual Workflows
 

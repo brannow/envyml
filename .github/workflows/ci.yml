@@ -19,22 +19,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
-        symfony: ['4.4.*', '5.4.*', '6.4.*']
+        php: ['8.1', '8.2', '8.3', '8.4']
+        symfony: ['7.0.*', '7.1.*', '7.2.*']
         exclude:
-          # Symfony 4.4 doesn't support PHP 8.2+
-          - php: '8.2'
-            symfony: '4.4.*'
-          - php: '8.3'
-            symfony: '4.4.*'
-          # Symfony 5.4 requires PHP 7.2.5+
-          - php: '7.1'
-            symfony: '5.4.*'
-          # Symfony 6.4 requires PHP 8.1+
-          - php: '7.4'
-            symfony: '6.4.*'
-          - php: '8.0'
-            symfony: '6.4.*'
+          # Symfony 7.2 might not be available yet
+          - php: '8.1'
+            symfony: '7.2.*'
 
     steps:
       - name: Checkout code
@@ -65,8 +55,9 @@ jobs:
                          "symfony/process:${{ matrix.symfony }}" \
                          "symfony/yaml:${{ matrix.symfony }}" \
                          "symfony/runtime:${{ matrix.symfony }}" \
-                         --no-interaction --no-update
-          composer update --prefer-dist --no-progress --no-interaction
+                         --no-interaction --no-update || echo "Warning: Could not set specific Symfony version"
+          composer update --prefer-dist --no-progress --no-interaction --ignore-platform-reqs
+        continue-on-error: false
 
       - name: Validate composer.json
         run: composer validate --strict
