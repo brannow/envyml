@@ -1,0 +1,98 @@
+name: Renovate Auto Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  check_suite:
+    types: [completed]
+  status: {}
+
+jobs:
+  auto-merge:
+    name: Auto Merge Renovate PRs
+    runs-on: ubuntu-latest
+    # Only run on Renovate PRs
+    if: |
+      github.actor == 'renovate[bot]' ||
+      startsWith(github.head_ref, 'renovate/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PR details
+        id: pr-check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              console.log('No PR found in context');
+              return;
+            }
+
+            // Get PR labels
+            const labels = pr.labels.map(label => label.name);
+
+            // Check if this is a minor/patch update
+            const isMinorOrPatch = labels.some(label =>
+              label.includes('minor') || label.includes('patch')
+            );
+
+            // Check if all checks have passed
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            });
+
+            const allChecksPassed = checks.check_runs.every(
+              check => check.conclusion === 'success' || check.conclusion === 'skipped'
+            );
+
+            console.log(`Is minor/patch: ${isMinorOrPatch}`);
+            console.log(`All checks passed: ${allChecksPassed}`);
+
+            return {
+              canAutoMerge: isMinorOrPatch && allChecksPassed,
+              isMinorOrPatch,
+              allChecksPassed
+            };
+
+      - name: Enable auto-merge
+        if: steps.pr-check.outputs.result && fromJSON(steps.pr-check.outputs.result).canAutoMerge
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: squash
+
+      - name: Approve PR
+        if: steps.pr-check.outputs.result && fromJSON(steps.pr-check.outputs.result).canAutoMerge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_request_number: context.payload.pull_request.number,
+              event: 'APPROVE',
+              body: '✅ Auto-approving minor/patch dependency update from Renovate.'
+            });
+
+      - name: Add comment for major updates
+        if: |
+          steps.pr-check.outputs.result &&
+          !fromJSON(steps.pr-check.outputs.result).isMinorOrPatch &&
+          github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: '⚠️ This is a **major** update and requires manual review before merging.\n\nPlease review the changes carefully and check for breaking changes.'
+            });
