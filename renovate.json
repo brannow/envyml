@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "semanticCommits": "enabled",
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^symfony/"],
+      "groupName": "Symfony packages",
+      "automerge": false,
+      "labels": ["dependencies", "symfony"]
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-update"]
+    }
+  ],
+  "schedule": [
+    "before 3am on Monday"
+  ],
+  "timezone": "UTC",
+  "prConcurrentLimit": 5,
+  "prCreation": "immediate",
+  "prHourlyLimit": 0,
+  "rebaseWhen": "behind-base-branch",
+  "branchPrefix": "renovate/",
+  "commitMessagePrefix": "chore(deps):",
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": false
+  },
+  "composer": {
+    "enabled": true
+  }
+}
